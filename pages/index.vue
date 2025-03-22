@@ -8,7 +8,7 @@
     </p>
     <div class="mt-8">
       <a
-        href="/register"
+        href="/auth/register"
         class="bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded text-lg font-medium transition"
       >
         Get Started
@@ -51,7 +51,7 @@
     <p class="mt-2 text-gray-700">Start tracking your Catan journey today.</p>
     <div class="mt-6">
       <a
-        href="/register"
+        href="/auth/register"
         class="bg-yellow-600 hover:bg-yellow-700 text-white py-3 px-6 rounded text-lg font-medium transition"
       >
         Register Now
