@@ -7,6 +7,18 @@
       <NuxtLink to="/app/dashboard" class="text-gray-700 hover:underline"
         >Dashboard</NuxtLink
       >
+      <NuxtLink @click="logout" class="text-gray-700 hover:underline"
+        >Logout</NuxtLink
+      >
     </div>
   </header>
 </template>
+
+<script setup>
+const supabase = useSupabaseClient();
+
+const logout = async () => {
+  await supabase.auth.signOut();
+  navigateTo("/login");
+};
+</script>

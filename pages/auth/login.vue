@@ -38,6 +38,17 @@
           />
         </div>
 
+        <!-- Message -->
+        <div
+          v-if="message.text"
+          :class="messageClass"
+          class="text-sm p-2 rounded mb-2"
+        >
+          {{ message.text }}
+        </div>
+
+        <Spinner v-if="loading" class="mt-4 mx-auto" />
+
         <!-- Submit -->
         <button
           type="submit"
@@ -49,7 +60,7 @@
 
       <!-- Optional: Register link -->
       <p class="text-sm text-center text-gray-500 mt-6">
-        Don’t have an account?
+        Don't have an account?
         <a href="/register" class="text-yellow-600 hover:underline"
           >Register here</a
         >
@@ -59,13 +70,45 @@
 </template>
 
 <script setup>
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import Spinner from "@/components/ui/spinner.vue";
+
+const supabase = useSupabaseClient();
+const router = useRouter();
+
+const loading = ref(false);
+
 const form = ref({
   email: "",
   password: "",
 });
 
-function login() {
-  console.log("Logging in with:", form.value);
-  // Add your login logic or API call here
+const message = ref({ text: "", type: "" });
+
+const messageClass = computed(() =>
+  message.value.type === "success"
+    ? "bg-green-100 text-green-700 border border-green-300"
+    : "bg-red-100 text-red-700 border border-red-300"
+);
+
+async function login() {
+  loading.value = true;
+  message.value = { text: "", type: "" };
+
+  const { email, password } = form.value;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    message.value = { text: error.message, type: "error" };
+  } else {
+    message.value = { text: "Login successful!", type: "success" };
+    setTimeout(() => {
+      router.push("/app/dashboard");
+    }, 1000);
+  }
+
+  loading.value = false;
 }
 </script>
