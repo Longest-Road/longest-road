@@ -12,8 +12,37 @@
         </p>
       </div>
 
-      <!-- Games Logged -->
-      <div class="bg-white shadow rounded-lg p-6 mb-8">
+      <!-- Tabs -->
+      <div class="flex space-x-4 mb-6 border-b">
+        <button
+          @click="activeTab = 'games'"
+          :class="[
+            'pb-2 px-4 font-medium',
+            activeTab === 'games'
+              ? 'border-b-2 border-yellow-500 text-yellow-600'
+              : 'text-gray-500 hover:text-gray-700',
+          ]"
+        >
+          Games
+        </button>
+        <button
+          @click="activeTab = 'leaderboard'"
+          :class="[
+            'pb-2 px-4 font-medium',
+            activeTab === 'leaderboard'
+              ? 'border-b-2 border-yellow-500 text-yellow-600'
+              : 'text-gray-500 hover:text-gray-700',
+          ]"
+        >
+          Leaderboard
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div
+        v-if="activeTab === 'games'"
+        class="bg-white shadow rounded-lg p-6 mb-8"
+      >
         <h2 class="text-2xl font-semibold mb-4">Games Logged</h2>
 
         <ul v-if="games.length" class="space-y-4">
@@ -32,14 +61,46 @@
                   Players: {{ game.players.length }}
                 </p>
               </div>
-              <button class="text-yellow-600 hover:underline text-sm">
+              <NuxtLink
+                :to="`/app/view-game?id=${game.id}`"
+                class="text-yellow-600 hover:underline text-sm"
+              >
                 View
-              </button>
+              </NuxtLink>
             </div>
           </li>
         </ul>
 
         <p v-else class="text-gray-500">No games logged yet.</p>
+      </div>
+
+      <div
+        v-if="activeTab === 'leaderboard'"
+        class="bg-white shadow rounded-lg p-6 mb-8"
+      >
+        <h2 class="text-2xl font-semibold mb-4">Leaderboard</h2>
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b">
+              <th class="py-2">Player</th>
+              <th class="py-2">Games Played</th>
+              <th class="py-2">Games Won</th>
+              <th class="py-2">Total Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(player, index) in leaderboard"
+              :key="index"
+              class="border-b hover:bg-gray-50"
+            >
+              <td class="py-2 font-medium">{{ player.name }}</td>
+              <td class="py-2">{{ player.gamesPlayed }}</td>
+              <td class="py-2">{{ player.gamesWon }}</td>
+              <td class="py-2">{{ player.points }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- CTA Button -->
@@ -60,6 +121,9 @@
 definePageMeta({
   layout: "application",
 });
+import { ref } from "vue";
+
+const activeTab = ref("games");
 
 const user = {
   name: "Ruairí",
@@ -71,14 +135,23 @@ const group = {
 
 const games = [
   {
+    id: 1,
     date: "2025-03-22",
     expansions: ["Seafarers", "Cities & Knights"],
     players: ["Alice", "Bob", "Charlie"],
   },
   {
+    id: 2,
     date: "2025-03-15",
     expansions: ["Base Game"],
     players: ["Alice", "Dave", "Ruairí"],
   },
+];
+
+const leaderboard = [
+  { name: "Alice", gamesPlayed: 5, gamesWon: 2, points: 38 },
+  { name: "Bob", gamesPlayed: 4, gamesWon: 1, points: 28 },
+  { name: "Charlie", gamesPlayed: 3, gamesWon: 1, points: 24 },
+  { name: "Ruairí", gamesPlayed: 2, gamesWon: 1, points: 20 },
 ];
 </script>

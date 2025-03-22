@@ -20,6 +20,8 @@
           v-model="form.players"
           :options="allPlayers"
           :multiple="true"
+          :object="true"
+          mode="tags"
           placeholder="Select players"
           label="name"
           track-by="id"
@@ -33,6 +35,7 @@
           v-model="form.expansions"
           :options="expansions"
           :multiple="true"
+          mode="tags"
           placeholder="Select expansions"
         />
       </div>
