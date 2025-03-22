@@ -114,7 +114,9 @@
       <!-- Optional: Login link -->
       <p class="text-sm text-center text-gray-500 mt-6">
         Already have an account?
-        <a href="/login" class="text-yellow-600 hover:underline">Log in here</a>
+        <NuxtLink to="/login" class="text-yellow-600 hover:underline"
+          >Log in here</NuxtLink
+        >
       </p>
     </div>
   </div>
