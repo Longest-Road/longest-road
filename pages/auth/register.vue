@@ -178,7 +178,7 @@ async function handleRegister() {
       .from("user_profiles")
       .insert([
         {
-          id: data.user.id,
+          user: data.user.id,
           first_name: firstName,
           last_name: lastName,
         },
@@ -192,13 +192,13 @@ async function handleRegister() {
   }
 
   message.value = {
-    text: "Registration successful! Please check your email to confirm.",
+    text: "Registration successful! Logging in...",
     type: "success",
   };
 
   loading.value = false;
 
-  // Optional: Redirect after short delay
-  // setTimeout(() => router.push('/login'), 3000)
+  // Redirect after short delay
+  setTimeout(() => router.push("/app/dashboard"), 2000);
 }
 </script>

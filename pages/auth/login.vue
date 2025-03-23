@@ -61,8 +61,8 @@
       <!-- Optional: Register link -->
       <p class="text-sm text-center text-gray-500 mt-6">
         Don't have an account?
-        <a href="/register" class="text-yellow-600 hover:underline"
-          >Register here</a
+        <NuxtLink to="/auth/register" class="text-yellow-600 hover:underline"
+          >Register here</NuxtLink
         >
       </p>
     </div>

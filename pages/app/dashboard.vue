@@ -2,13 +2,29 @@
   <div class="min-h-screen bg-gray-50 text-gray-800">
     <div class="max-w-5xl mx-auto px-4 py-12">
       <!-- Greeting & Group -->
-      <div class="mb-8">
+      <div class="mb-8" v-if="profile">
         <h1 class="text-3xl font-bold mb-2">
-          Welcome back, {{ user.name }} 👋
+          Welcome back, {{ profile.first_name }} 👋
         </h1>
         <p class="text-lg">
           Group:
           <span class="font-medium text-yellow-600">{{ group.name }}</span>
+          <div v-if="group.name == 'No group assigned'">
+            <NuxtLink to="/app/create-group">
+              <button
+              class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition"
+            >
+              Create a Group
+              </button>
+            </NuxtLink>
+            <NuxtLink to="/app/join-group">
+              <button
+              class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition"
+            >
+              Join a Group
+              </button>
+            </NuxtLink>
+          </div>
         </p>
       </div>
 
@@ -35,6 +51,18 @@
           ]"
         >
           Leaderboard
+        </button>
+
+        <button
+          @click="activeTab = 'group'"
+          :class="[
+            'pb-2 px-4 font-medium',
+            activeTab === 'group'
+              ? 'border-b-2 border-yellow-500 text-yellow-600'
+              : 'text-gray-500 hover:text-gray-700',
+          ]"
+        >
+          Group
         </button>
       </div>
 
@@ -103,6 +131,20 @@
         </table>
       </div>
 
+      <div
+        v-if="activeTab === 'group'"
+        class="bg-white shadow rounded-lg p-6 mb-8"
+      >
+        <h2 class="text-2xl font-semibold mb-4">Group</h2>
+        <p>
+          <b>Group Name:</b> {{ group.name }}
+        </p>
+        <p>
+          <b>Group Code:</b> {{ group.code }}
+        </p>
+        
+      </div>
+
       <!-- CTA Button -->
       <div class="text-center">
         <NuxtLink to="/app/log-game">
@@ -123,15 +165,56 @@ definePageMeta({
 });
 import { ref } from "vue";
 
+const supabase = useSupabaseClient();
+const authUser = useSupabaseUser();
+const profile = ref(null);
+const loading = ref(true);
+const group = ref(null);
+
+onMounted(async () => {
+  if (!authUser.value) return;
+
+  const { data: profileData, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("*")
+    .eq("user", authUser.value.id)
+    .single();
+
+  if (profileError) {
+    console.error("Error fetching profile:", profileError.message);
+  } else {
+    profile.value = profileData;
+  }
+
+  // Check if the user has a group
+  if (profile.value && profile.value.group) {
+    const { data: groupData, error: groupError } = await supabase
+      .from("groups")
+      .select("*")
+      .eq("id", profile.value.group)
+      .single();
+
+    if (groupError) {
+      console.error("Error fetching group:", groupError.message);
+    } else {
+      group.value = groupData;
+    }
+  } else {
+    // Handle the case where the user does not have a group
+    console.log("User does not have a group.");
+    group.value = { name: "No group assigned" }; // Default message or object
+  }
+
+  loading.value = false;
+  console.log(
+    "Name is ",
+    profile.value?.first_name,
+    "",
+    profile.value?.last_name
+  );
+});
+
 const activeTab = ref("games");
-
-const user = {
-  name: "Ruairí",
-};
-
-const group = {
-  name: "Catan Club Galway",
-};
 
 const games = [
   {
