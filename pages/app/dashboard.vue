@@ -178,39 +178,45 @@
           <p>Loading leaderboard data...</p>
         </div>
         
-        <table v-else class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b">
-              <th class="py-2 pl-3">Player</th>
-              <th class="py-2 text-center">Games Played</th>
-              <th class="py-2 text-center">Games Won</th>
-              <th class="py-2 text-center">Win %</th>
-              <th class="py-2 text-center">Total Points</th>
-              <th class="py-2 text-center">Pts/Game</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(player, index) in calculatedLeaderboard"
-              :key="index"
-              :class="[
-                'border-b hover:bg-gray-50',
-                index === 0 ? 'bg-orange-100 font-semibold ring-2 ring-yellow-400' : ''
-              ]"
-            >
-              <td class="py-2 pl-3 font-medium">
-                {{ player.name }}
-                <span v-if="index === 0" class="ml-1 text-yellow-600">👑</span>
-                <span v-if="index === 0" class="ml-2 text-xs px-2 py-0.5 bg-yellow-500 text-white rounded-full">Champion</span>
-              </td>
-              <td class="py-2 text-center">{{ player.gamesPlayed }}</td>
-              <td class="py-2 text-center">{{ player.gamesWon }}</td>
-              <td class="py-2 text-center">{{ player.gamesPlayed > 0 ? Math.round(player.gamesWon / player.gamesPlayed * 100) + '%' : '0%' }}</td>
-              <td class="py-2 text-center">{{ player.points }}</td>
-              <td class="py-2 text-center">{{ player.pointsPerGame }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-else class="overflow-x-auto -mx-6 px-6">
+          <div class="inline-block min-w-full align-middle">
+            <table class="min-w-full divide-y divide-gray-200 border-collapse">
+              <thead>
+                <tr class="border-b">
+                  <th scope="col" class="py-3 pl-3 pr-3 text-left text-sm font-semibold">Player</th>
+                  <th scope="col" class="py-3 px-3 text-center text-sm font-semibold whitespace-nowrap">Games Played</th>
+                  <th scope="col" class="py-3 px-3 text-center text-sm font-semibold whitespace-nowrap">Games Won</th>
+                  <th scope="col" class="py-3 px-3 text-center text-sm font-semibold whitespace-nowrap">Win %</th>
+                  <th scope="col" class="py-3 px-3 text-center text-sm font-semibold whitespace-nowrap">Total Points</th>
+                  <th scope="col" class="py-3 px-3 text-center text-sm font-semibold whitespace-nowrap">Pts/Game</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <tr
+                  v-for="(player, index) in calculatedLeaderboard"
+                  :key="index"
+                  :class="[
+                    'border-b hover:bg-gray-50',
+                    index === 0 ? 'bg-orange-100 font-semibold ring-2 ring-yellow-400' : ''
+                  ]"
+                >
+                  <td class="py-3 pl-3 pr-3 text-sm whitespace-nowrap">
+                    <div class="flex items-center">
+                      <span class="font-medium">{{ player.name }}</span>
+                      <span v-if="index === 0" class="ml-1 text-yellow-600">👑</span>
+                      <span v-if="index === 0" class="ml-2 text-xs px-2 py-0.5 bg-yellow-500 text-white rounded-full whitespace-nowrap">Champion</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-3 text-sm text-center whitespace-nowrap">{{ player.gamesPlayed }}</td>
+                  <td class="py-3 px-3 text-sm text-center whitespace-nowrap">{{ player.gamesWon }}</td>
+                  <td class="py-3 px-3 text-sm text-center whitespace-nowrap">{{ player.gamesPlayed > 0 ? Math.round(player.gamesWon / player.gamesPlayed * 100) + '%' : '0%' }}</td>
+                  <td class="py-3 px-3 text-sm text-center whitespace-nowrap">{{ player.points }}</td>
+                  <td class="py-3 px-3 text-sm text-center whitespace-nowrap">{{ player.pointsPerGame }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div
