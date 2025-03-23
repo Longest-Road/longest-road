@@ -79,35 +79,93 @@
         v-if="activeTab === 'games'"
         class="bg-white shadow rounded-lg p-6 mb-8"
       >
-        <h2 class="text-2xl font-semibold mb-4">Games Logged</h2>
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-semibold">Games Logged</h2>
+          <NuxtLink to="/app/log-game">
+            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition text-sm">
+              + Log New Game
+            </button>
+          </NuxtLink>
+        </div>
 
-        <ul v-if="games.length" class="space-y-4">
-          <li
-            v-for="(game, index) in games"
-            :key="index"
-            class="border border-gray-200 rounded-md p-4"
+        <div v-if="gamesLoading" class="py-8 text-center text-gray-500">
+          <p>Loading games...</p>
+        </div>
+        
+        <div v-else-if="games.length" class="grid gap-6 md:grid-cols-2">
+          <div
+            v-for="game in games"
+            :key="game.id"
+            class="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
           >
-            <div class="flex justify-between items-center">
-              <div>
-                <p class="text-lg font-semibold">{{ game.date }}</p>
-                <p class="text-sm text-gray-500">
-                  Expansions: {{ game.expansions.join(", ") }}
-                </p>
-                <!-- <p class="text-sm text-gray-500">
-                  Players: {{ game.players.length }}
-                </p> -->
+            <!-- Game Header -->
+            <div class="bg-orange-100 border-b border-yellow-100 p-4">
+              <h3 class="text-xl font-bold text-gray-800 mb-1">{{ game.name || 'Unnamed Game' }}</h3>
+              <div class="flex items-center text-sm text-gray-600">
+                <span class="inline-block">
+                  <CalendarIcon class="w-4 h-4 inline mr-1" />
+                  {{ formatDate(game.game_date) }}
+                </span>
               </div>
+            </div>
+            
+            <!-- Game Details -->
+            <div class="p-4">
+              <!-- Player Results -->
+              <div class="mb-3">
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Players</h4>
+                <ul v-if="game.playerDetails && game.playerDetails.length > 0" class="space-y-1 mb-2">
+                  <li v-for="player in game.playerDetails" :key="player.id" class="flex items-center">
+                    <div 
+                      class="w-3 h-3 rounded-full mr-2" 
+                      :style="`background-color: ${player.colour}; ${player.colour === '#ffffff' ? 'border: 1px solid #000000;' : ''}`"
+                    ></div>
+                    <span class="font-medium">{{ player.name }}</span>
+                    <span class="ml-auto font-semibold">{{ player.score }} pts</span>
+                    <span v-if="isWinner(game, player)" class="ml-2 text-yellow-500">👑</span>
+                  </li>
+                </ul>
+                <p v-else class="text-gray-500 text-sm italic">No player details available</p>
+              </div>
+              
+              <!-- Expansions -->
+              <div>
+                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Expansions</h4>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="expansion in game.expansions"
+                    :key="expansion"
+                    class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded"
+                  >
+                    {{ expansion }}
+                  </span>
+                  <span v-if="!game.expansions || game.expansions.length === 0" class="text-gray-400 text-sm">
+                    Base game only
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- View Details Link -->
+            <div class="bg-gray-50 p-3 text-right border-t">
               <NuxtLink
                 :to="`/app/view-game?id=${game.id}`"
-                class="text-yellow-600 hover:underline text-sm"
+                class="text-yellow-600 hover:text-yellow-700 text-sm font-medium hover:underline"
               >
-                View
+                View Details →
               </NuxtLink>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
 
-        <p v-else class="text-gray-500">No games logged yet.</p>
+        <div v-else class="py-8 text-center text-gray-500 border border-dashed rounded-lg">
+          <p class="mb-4">No games logged yet.</p>
+          <NuxtLink to="/app/log-game">
+            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition">
+              Log Your First Game
+            </button>
+          </NuxtLink>
+        </div>
       </div>
 
       <div
@@ -115,25 +173,41 @@
         class="bg-white shadow rounded-lg p-6 mb-8"
       >
         <h2 class="text-2xl font-semibold mb-4">Leaderboard</h2>
-        <table class="w-full text-left border-collapse">
+        
+        <div v-if="calculatedLeaderboard.length === 0" class="text-center py-8 text-gray-500">
+          <p>Loading leaderboard data...</p>
+        </div>
+        
+        <table v-else class="w-full text-left border-collapse">
           <thead>
             <tr class="border-b">
-              <th class="py-2">Player</th>
-              <th class="py-2">Games Played</th>
-              <th class="py-2">Games Won</th>
-              <th class="py-2">Total Points</th>
+              <th class="py-2 pl-3">Player</th>
+              <th class="py-2 text-center">Games Played</th>
+              <th class="py-2 text-center">Games Won</th>
+              <th class="py-2 text-center">Win %</th>
+              <th class="py-2 text-center">Total Points</th>
+              <th class="py-2 text-center">Pts/Game</th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="(player, index) in leaderboard"
+              v-for="(player, index) in calculatedLeaderboard"
               :key="index"
-              class="border-b hover:bg-gray-50"
+              :class="[
+                'border-b hover:bg-gray-50',
+                index === 0 ? 'bg-orange-100 font-semibold ring-2 ring-yellow-400' : ''
+              ]"
             >
-              <td class="py-2 font-medium">{{ player.name }}</td>
-              <td class="py-2">{{ player.gamesPlayed }}</td>
-              <td class="py-2">{{ player.gamesWon }}</td>
-              <td class="py-2">{{ player.points }}</td>
+              <td class="py-2 pl-3 font-medium">
+                {{ player.name }}
+                <span v-if="index === 0" class="ml-1 text-yellow-600">👑</span>
+                <span v-if="index === 0" class="ml-2 text-xs px-2 py-0.5 bg-yellow-500 text-white rounded-full">Champion</span>
+              </td>
+              <td class="py-2 text-center">{{ player.gamesPlayed }}</td>
+              <td class="py-2 text-center">{{ player.gamesWon }}</td>
+              <td class="py-2 text-center">{{ player.gamesPlayed > 0 ? Math.round(player.gamesWon / player.gamesPlayed * 100) + '%' : '0%' }}</td>
+              <td class="py-2 text-center">{{ player.points }}</td>
+              <td class="py-2 text-center">{{ player.pointsPerGame }}</td>
             </tr>
           </tbody>
         </table>
@@ -144,24 +218,34 @@
         class="bg-white shadow rounded-lg p-6 mb-8"
       >
         <h2 class="text-2xl font-semibold mb-4">Group</h2>
-        <p>
-          <b>Group Name:</b> {{ group.name }}
-        </p>
-        <p>
-          <b>Group Code:</b> {{ group.code }}
-        </p>
+        <div class="mb-6">
+          <p class="mb-2">
+            <span class="font-semibold">Group Name:</span> {{ group.name }}
+          </p>
+          <p>
+            <span class="font-semibold">Group Code:</span> {{ group.code }}
+          </p>
+        </div>
         
-      </div>
-
-      <!-- CTA Button -->
-      <div class="text-center">
-        <NuxtLink to="/app/log-game">
-          <button
-            class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-md font-medium transition"
-          >
-            Log a Game
-          </button>
-        </NuxtLink>
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Group Members</h3>
+          <div v-if="groupMembers.length === 0" class="py-4 text-center text-gray-500">
+            <p>Loading group members...</p>
+          </div>
+          <ul v-else class="divide-y divide-gray-200">
+            <li v-for="member in groupMembers" :key="member.id" class="py-3 flex items-center">
+              <div class="text-yellow-600 mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <p class="font-medium">{{ member.first_name }} {{ member.last_name }}</p>
+                <p v-if="member.user === authUser.id" class="text-xs text-gray-500">(You)</p>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
     </section>
     </div>
@@ -173,14 +257,40 @@
 definePageMeta({
   layout: "application",
 });
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
+import { h, defineComponent } from "vue";
 
 const supabase = useSupabaseClient();
 const authUser = useSupabaseUser();
 const profile = ref(null);
 const loading = ref(true);
+const gamesLoading = ref(true);
 const group = ref({ name: "No group assigned" });
 const games = ref([]);
+const groupMembers = ref([]);
+
+const activeTab = ref("games");
+const calculatedLeaderboard = ref([]);
+
+// Function to format date
+function formatDate(dateString) {
+  if (!dateString) return "Unknown date";
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+
+// Function to determine if a player is the winner
+function isWinner(game, player) {
+  if (!game.playerDetails || game.playerDetails.length === 0) return false;
+  
+  // Find the player with the highest score
+  const highestScore = Math.max(...game.playerDetails.map(p => p.score));
+  return player.score === highestScore;
+}
 
 onMounted(async () => {
   if (!authUser.value) return;
@@ -210,38 +320,242 @@ onMounted(async () => {
     } else {
       group.value = groupData;
     }
+    
+    // Fetch games with player details
+    await fetchGames();
+    
+    // Also calculate the leaderboard 
+    await calculateLeaderboard();
+    
+    // And fetch group members
+    await fetchGroupMembers();
   } else {
     console.log("User does not have a group.");
     group.value = { name: "No group assigned" }; // Default message or object
-  }
-
-  const { data: gameData, error: gameError } = await supabase
-    .from("games")
-    .select("*")
-    .eq("group_id", profile.value.group);
-
-  if (gameError) {
-    console.error("Error fetching games:", gameError.message);
-  } else {
-    games.value = gameData || [];
+    gamesLoading.value = false;
   }
 
   loading.value = false;
-  console.log(
-    "Name is ",
-    profile.value?.first_name,
-    "",
-    profile.value?.last_name
-  );
 });
 
-const activeTab = ref("games");
+async function fetchGames() {
+  gamesLoading.value = true;
+  
+  try {
+    // Fetch basic game data
+    const { data: gameData, error: gameError } = await supabase
+      .from("games")
+      .select("*")
+      .eq("group_id", profile.value.group)
+      .order('created_at', { ascending: false });
 
+    if (gameError) {
+      console.error("Error fetching games:", gameError.message);
+      games.value = [];
+      return;
+    }
+    
+    console.log("Game data:", gameData); // Debug
+    
+    // For each game, fetch the player details
+    const gamesWithDetails = await Promise.all(
+      gameData.map(async (game) => {
+        // Get player links
+        const { data: linkData, error: linkError } = await supabase
+          .from("games_users_link")
+          .select("*")
+          .eq("game_id", game.id);
+          
+        if (linkError) {
+          console.error(`Error fetching player links for game ${game.id}:`, linkError.message);
+          return { ...game, playerDetails: [] };
+        }
+        
+        console.log(`Player links for game ${game.id}:`, linkData); // Debug
+        if (linkData.length === 0) {
+          console.log(`No player links found for game ${game.id} - this is unusual`);
+        }
 
-const leaderboard = [
-  { name: "Alice", gamesPlayed: 5, gamesWon: 2, points: 38 },
-  { name: "Bob", gamesPlayed: 4, gamesWon: 1, points: 28 },
-  { name: "Charlie", gamesPlayed: 3, gamesWon: 1, points: 24 },
-  { name: "Ruairí", gamesPlayed: 2, gamesWon: 1, points: 20 },
-];
+        // For debugging - check the column names in the link data
+        if (linkData.length > 0) {
+          console.log("Sample link data with columns:", linkData[0]);
+        }
+        
+        // Get player profiles for each link
+        const playerDetails = await Promise.all(
+          linkData.map(async (link) => {
+            // Use correct column name - user_id instead of users_id
+            const { data: userData, error: userError } = await supabase
+              .from("user_profiles")
+              .select("first_name, last_name")
+              .eq("user", link.user_id)
+              .single();
+              
+            if (userError) {
+              console.error(`Error fetching user ${link.user_id}:`, userError.message);
+              return { 
+                id: link.id,
+                colour: link.colour,
+                score: link.score,
+                name: "Unknown Player"
+              };
+            }
+            
+            return {
+              id: link.id,
+              colour: link.colour,
+              score: link.score,
+              name: `${userData.first_name} ${userData.last_name}`
+            };
+          })
+        );
+        
+        return { ...game, playerDetails };
+      })
+    );
+    
+    games.value = gamesWithDetails;
+    console.log("Games with details:", games.value); // Debug
+  } catch (error) {
+    console.error("Error in fetchGames:", error);
+    games.value = [];
+  } finally {
+    gamesLoading.value = false;
+  }
+}
+
+// Function to calculate the leaderboard data
+async function calculateLeaderboard() {
+  if (!profile.value || !profile.value.group) return;
+  
+  try {
+    // First get all users in the group
+    const { data: groupUsers, error: userError } = await supabase
+      .from("user_profiles")
+      .select("id, user, first_name, last_name")
+      .eq("group", profile.value.group);
+      
+    if (userError) {
+      console.error("Error fetching group users:", userError.message);
+      return;
+    }
+    
+    // Get all games for this group
+    const { data: allGames, error: gamesError } = await supabase
+      .from("games")
+      .select("id")
+      .eq("group_id", profile.value.group);
+      
+    if (gamesError) {
+      console.error("Error fetching games for leaderboard:", gamesError.message);
+      return;
+    }
+    
+    // Get all game results for this group's games
+    const { data: allResults, error: resultsError } = await supabase
+      .from("games_users_link")
+      .select("*")
+      .in("game_id", allGames.map(game => game.id));
+      
+    if (resultsError) {
+      console.error("Error fetching game results:", resultsError.message);
+      return;
+    }
+    
+    console.log("Group users:", groupUsers);
+    console.log("All games:", allGames);
+    console.log("All results:", allResults);
+    
+    // Calculate stats for each user
+    const leaderboardData = groupUsers.map(user => {
+      // Find all results for this user
+      const userResults = allResults.filter(result => result.user_id === user.user);
+      
+      // Calculate total games played
+      const gamesPlayed = userResults.length;
+      
+      // Calculate total points
+      const totalPoints = userResults.reduce((sum, result) => sum + (result.score || 0), 0);
+      
+      // Calculate games won
+      const gamesWon = userResults.filter(result => {
+        // Get all results for this game
+        const gameResults = allResults.filter(gr => gr.game_id === result.game_id);
+        // Check if this user had the highest score
+        return result.score >= Math.max(...gameResults.map(gr => gr.score || 0));
+      }).length;
+      
+      return {
+        name: `${user.first_name} ${user.last_name}`,
+        gamesPlayed,
+        gamesWon,
+        points: totalPoints,
+        user_id: user.user,
+        pointsPerGame: gamesPlayed > 0 ? Math.round(totalPoints / gamesPlayed * 10) / 10 : 0
+      };
+    });
+    
+    // Sort by total points (descending)
+    leaderboardData.sort((a, b) => b.points - a.points);
+    
+    calculatedLeaderboard.value = leaderboardData;
+    console.log("Calculated leaderboard:", calculatedLeaderboard.value);
+  } catch (error) {
+    console.error("Error calculating leaderboard:", error);
+  }
+}
+
+// Update the leaderboard when the activeTab changes to 'leaderboard'
+watch(activeTab, async (newTab) => {
+  if (newTab === 'leaderboard' && calculatedLeaderboard.value.length === 0) {
+    await calculateLeaderboard();
+  }
+  
+  if (newTab === 'group' && groupMembers.value.length === 0) {
+    await fetchGroupMembers();
+  }
+});
+
+// Fetch all members of the current group
+async function fetchGroupMembers() {
+  if (!profile.value || !profile.value.group) return;
+  
+  try {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("group", profile.value.group)
+      .order('first_name', { ascending: true });
+      
+    if (error) {
+      console.error("Error fetching group members:", error.message);
+    } else {
+      groupMembers.value = data || [];
+      console.log("Group members:", groupMembers.value);
+    }
+  } catch (error) {
+    console.error("Error in fetchGroupMembers:", error);
+  }
+}
+
+// Calendar icon component
+const CalendarIcon = defineComponent({
+  render() {
+    return h('svg', { 
+      xmlns: 'http://www.w3.org/2000/svg', 
+      fill: 'none', 
+      viewBox: '0 0 24 24', 
+      stroke: 'currentColor',
+      class: this.$attrs.class || 'w-5 h-5'
+    }, [
+      h('path', { 
+        'stroke-linecap': 'round', 
+        'stroke-linejoin': 'round', 
+        'stroke-width': '2', 
+        d: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+      })
+    ]);
+  }
+});
 </script>
+
