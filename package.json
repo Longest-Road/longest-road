@@ -10,12 +10,14 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxthub/core": "0.8.18",
     "@vueform/multiselect": "^2.6.11",
     "@vueuse/core": "^13.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.483.0",
     "nuxt": "^3.16.1",
+    "nuxthub": "^0.8.9",
     "reka-ui": "^2.1.1",
     "shadcn-nuxt": "1.0.3",
     "tailwind-merge": "^3.0.2",

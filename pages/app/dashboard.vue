@@ -9,7 +9,7 @@
         <p class="text-lg">
           Group:
           <span class="font-medium text-yellow-600">{{ group.name }}</span>
-          <div v-if="group.name == 'No group assigned'">
+          <div v-if="group.name == 'No group assigned'" class="flex space-x-4 mt-4">
             <NuxtLink to="/app/create-group">
               <button
               class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md font-medium transition"
@@ -28,7 +28,15 @@
         </p>
       </div>
 
+      <section v-if="group.name == 'No group assigned'">
+        <p>
+          You are not currently a member of any group.
+        </p>
+      </section>
+
+      <section v-if="group.name != 'No group assigned'">
       <!-- Tabs -->
+      
       <div class="flex space-x-4 mb-6 border-b">
         <button
           @click="activeTab = 'games'"
@@ -85,9 +93,9 @@
                 <p class="text-sm text-gray-500">
                   Expansions: {{ game.expansions.join(", ") }}
                 </p>
-                <p class="text-sm text-gray-500">
+                <!-- <p class="text-sm text-gray-500">
                   Players: {{ game.players.length }}
-                </p>
+                </p> -->
               </div>
               <NuxtLink
                 :to="`/app/view-game?id=${game.id}`"
@@ -155,7 +163,9 @@
           </button>
         </NuxtLink>
       </div>
+    </section>
     </div>
+
   </div>
 </template>
 
@@ -169,7 +179,8 @@ const supabase = useSupabaseClient();
 const authUser = useSupabaseUser();
 const profile = ref(null);
 const loading = ref(true);
-const group = ref(null);
+const group = ref({ name: "No group assigned" });
+const games = ref([]);
 
 onMounted(async () => {
   if (!authUser.value) return;
@@ -200,9 +211,19 @@ onMounted(async () => {
       group.value = groupData;
     }
   } else {
-    // Handle the case where the user does not have a group
     console.log("User does not have a group.");
     group.value = { name: "No group assigned" }; // Default message or object
+  }
+
+  const { data: gameData, error: gameError } = await supabase
+    .from("games")
+    .select("*")
+    .eq("group_id", profile.value.group);
+
+  if (gameError) {
+    console.error("Error fetching games:", gameError.message);
+  } else {
+    games.value = gameData || [];
   }
 
   loading.value = false;
@@ -216,20 +237,6 @@ onMounted(async () => {
 
 const activeTab = ref("games");
 
-const games = [
-  {
-    id: 1,
-    date: "2025-03-22",
-    expansions: ["Seafarers", "Cities & Knights"],
-    players: ["Alice", "Bob", "Charlie"],
-  },
-  {
-    id: 2,
-    date: "2025-03-15",
-    expansions: ["Base Game"],
-    players: ["Alice", "Dave", "Ruairí"],
-  },
-];
 
 const leaderboard = [
   { name: "Alice", gamesPlayed: 5, gamesWon: 2, points: 38 },
