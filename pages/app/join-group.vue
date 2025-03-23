@@ -1,14 +1,14 @@
 <template>
   <div class="max-w-3xl mx-auto py-10 px-4">
-    <h1 class="text-3xl font-bold mb-6">Create a Group</h1>
+    <h1 class="text-3xl font-bold mb-6">Join a Group</h1>
 
     <form @submit.prevent="submitForm" class="space-y-6">
-      <!-- Name -->
+      <!-- Code -->
       <div>
-        <label class="block text-sm font-medium mb-1">Group Name</label>
+        <label class="block text-sm font-medium mb-1">Group Code</label>
         <input
           type="text"
-          v-model="form.name"
+          v-model="form.code"
           class="w-full border border-gray-300 rounded px-4 py-2"
         />
       </div>
@@ -29,7 +29,7 @@
         type="submit"
         class="mt-4 bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600"
       >
-        Create Group
+        Join Group
       </button>
     </form>
   </div>
@@ -53,23 +53,12 @@ definePageMeta({
 });
 
 const form = reactive({
-  name: "",
+  code: "",
 });
 
 const supabase = useSupabaseClient();
 const authUser = useSupabaseUser();
 const router = useRouter();
-
-console.log("Authenticated User ID:", authUser.value.id);
-
-function generateRandomCode() {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-}
 
 async function submitForm() {
   loading.value = true;
@@ -81,46 +70,49 @@ async function submitForm() {
     return;
   }
 
-  const groupCode = generateRandomCode();
   const { data: groupData, error: groupError } = await supabase
     .from("groups")
-    .insert({
-      name: form.name,
-      code: groupCode,
-      owner: authUser.value.id,
-    })
     .select()
+    .eq("code", form.code)
     .single();
 
   if (groupError) {
     message.value = {
-      text: `Error creating group: ${groupError.message}`,
+      text: `Error finding group: ${groupError.message}`,
       type: "error",
     };
-    loading.value = false;
-    return;
+  } else if (groupData.length === 0 || groupData == null) {
+    message.value = {
+      text: "Group not found",
+      type: "error",
+    };
   }
 
-  console.log("Group creation response:", groupData);
+  console.log("Group data:", groupData);
 
-  const { error: profileError } = await supabase
+  const { data: joinData, error: joinError } = await supabase
     .from("user_profiles")
-    .update({ group: groupData.id })
-    .eq("user", authUser.value.id);
+    .update({
+      group: groupData.id,
+    })
+    .eq("user", authUser.value.id)
+    .select()
+    .single();
 
-  if (profileError) {
+  if (joinError) {
     message.value = {
-      text: `Error updating user profile: ${profileError.message}`,
+      text: `Error joining group: ${joinError.message}`,
       type: "error",
     };
-    console.error("Profile update error:", profileError);
   } else {
     message.value = {
-      text: "Group created successfully! Redirecting to dashboard...",
+      text: "Group joined successfully! Redirecting to dashboard...",
       type: "success",
     };
     setTimeout(() => router.push("/app/dashboard"), 2000);
   }
+
+  console.log("Group join response:", joinData);
 
   loading.value = false;
 }

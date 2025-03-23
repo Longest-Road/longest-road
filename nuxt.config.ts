@@ -5,11 +5,7 @@ export default defineNuxtConfig({
   build: {
     transpile: ['@supabase/supabase-js'],
   },
-  modules: [
-    '@nuxtjs/tailwindcss', 
-    'shadcn-nuxt', 
-    '@nuxtjs/supabase',
-  ],
+  modules: ['@nuxtjs/tailwindcss', 'shadcn-nuxt', '@nuxtjs/supabase', '@nuxthub/core'],
   shadcn: {
     /**
      * Prefix for all the imported component
