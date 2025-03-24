@@ -114,7 +114,7 @@
       <!-- Optional: Login link -->
       <p class="text-sm text-center text-gray-500 mt-6">
         Already have an account?
-        <NuxtLink to="/login" class="text-yellow-600 hover:underline"
+        <NuxtLink to="/auth/login" class="text-yellow-600 hover:underline"
           >Log in here</NuxtLink
         >
       </p>
